@@ -1,0 +1,43 @@
+---
+- name: Install Apache HTTP Server
+  hosts: localhost
+  become: yes
+  become_user: root
+
+  tasks:
+  - name: Install dependencies
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - software-properties-common
+        - wget
+
+  - name: Add Apache repository key (if needed)
+    become: true
+    shell: curl -fsSL https://www.apache.org/dist/httpd/KEYS | sudo tee /usr/share/keyrings/apache-keyring.asc > /dev/null
+
+  - name: Add Apache repository to sources.list.d (if necessary)
+    become: true
+    shell: echo "deb [signed-by=/usr/share/keyrings/apache-keyring.asc] https://apache.mirror.server/repository binary/" | sudo tee /etc/apt/sources.list.d/apache.list > /dev/null
+
+  - name: Update all packages to their latest version
+    apt:
+      name: "*"
+      state: latest
+
+  - name: Install Apache
+    become: true
+    apt:
+      name: apache2
+      state: present
+
+  - name: Enable and start Apache service
+    become: true
+    systemd:
+      name: apache2
+      enabled: yes
+      state: started
+
